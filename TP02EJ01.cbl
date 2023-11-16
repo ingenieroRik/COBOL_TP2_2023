@@ -1,8 +1,8 @@
       ******************************************************************
       * Authors: Noem� Berge, Claudia Perdiguera, Ricardo Balsimelli,
       *          Ricardo Garc�a, Senen Urdaneta.
-      * Date: 04/10/2023
-      * Purpose: TP1 - AULA 3 - GRUPO 1
+      * Date: 14/11/2023
+      * Purpose: TP2 - AULA 3 - GRUPO 1
       * Tectonics: cobc
       ******************************************************************
        IDENTIFICATION DIVISION.
@@ -32,7 +32,6 @@
            ORGANIZATION IS LINE SEQUENTIAL
            FILE STATUS IS FS-ERRORES.
 
-
       *----------------------------------------------------------------*
        DATA DIVISION.
 
@@ -57,15 +56,11 @@
                88 WS-MT-PESOS                           VALUE 'ARS'.
           05 WS-ENT-IMPORTE                           PIC 9(08)V9(02).
 
-
-
        FD SAL-RESUMENES.
-       01 WS-SAL-PROMEDIOS                     PIC X(84).
+       01 WS-SAL-RESUMENES                            PIC X(84).
 
        FD SAL-ERRORES.
-          01 WS-SAL-ERRORES                      PIC X(88).
-
-
+          01 WS-SAL-ERRORES                           PIC X(88).
 
       *----------------------------------------------------------------*
        WORKING-STORAGE SECTION.
@@ -74,31 +69,12 @@
       *----------------------------------------------------------------*
        01 WS-VAL-FECHA.
            COPY VALFECIO.
-
-
-       01 WS-MAESTRO-TARJETAS-REG.
-          05 WS-NUM-CUENTA                       PIC 9(10).
-          05 WS-NUM-TARJETA                      PIC X(19).
-          05 WS-NOMBRE                           PIC X(20).
-          05 WS-APELLIDO                         PIC X(20).
-          05 WS-DIRECCION                        PIC X(40).
-          05 WS-COD-POSTAL                       PIC 9(04).
-          05 WS-MONEDA-TARJETA                   PIC X(03).
-               88 WS-DOLARES                      VALUE 'USD'.
-               88 WS-PESOS                        VALUE 'ARS'.
-          05 WS-LIMITE-TARJETA                   PIC 9(04)V9(02).
-
-      *    salida de datos para el modulo MAESTARJ
-       01 WS-SALIDA-TARJETA.
-         05 WS-SAL-NUM-TARJETA  PIC X(19) VALUE '9012-3456-1234-5678'.
-
-
       *----------------------------------------------------------------*
       *    VARIABLES FILE STATUS  ENTRADA/SALIDA                       *
       *----------------------------------------------------------------*
        01 FS-STATUS.
       *----------------------------------------------------------------*
-      *   ** FILE STATUS DE CONSUMOS                                    *
+      *   ** FILE STATUS DE CONSUMOS                                   *
       *----------------------------------------------------------------*
           05 FS-CONSUMOS                    PIC X(2).
              88 FS-CONSUMOS-OK                          VALUE '00'.
@@ -113,7 +89,7 @@
              88 FS-RESUMENES-EOF                       VALUE '10'.
 
       *----------------------------------------------------------------*
-      *   ** FILE STATUS DE ERROR                                  *
+      *   ** FILE STATUS DE ERROR                                      *
       *----------------------------------------------------------------*
           05 FS-ERRORES                  PIC X(2).
              88 FS-ERRORES-OK                        VALUE '00'.
@@ -122,7 +98,15 @@
       *----------------------------------------------------------------*
       *    DECLARACION DE VARIABLES DEL PROGRAMA                       *
       *----------------------------------------------------------------*
-
+       01 WS-VARIABLES.
+           02 WS-RESUMEN-TARJETA           PIC X(19)       VALUE SPACES.
+           02 WS-RESUMEN-SALDO-ARG         PIC 9(08)V9(02) VALUE ZEROES.
+           02 WS-RESUMEN-SALDO-USD         PIC 9(08)V9(02) VALUE ZEROES.
+           02 WS-RESUMEN-PAGO-MINIMO       PIC 9(08)V9(02) VALUE ZEROES.
+           02 WS-RESUMEN-TOTAL-CONSUMOS    PIC 9(06)       VALUE ZEROES.
+           02 WS-RESUMEN-TOTAL-TARJETAS    PIC 9(06)       VALUE ZEROES.
+           02 WS-RESUMEN-TOTAL-RESUMENES   PIC 9(06)       VALUE ZEROES.
+           02 WS-RESUMEN-TOTAL-ERRORES     PIC 9(06)       VALUE ZEROES.
 
        77 WS-TIPO-DE-CAMBIO                PIC 9(04)V9(02) VALUE 365,50.
        77 WS-MENSAJE                       PIC X(44)
@@ -130,9 +114,37 @@
        77 WS-DESCUENTO                     PIC 9(02) VALUE 10.
        77 WS-PAGO-MINIMO                   PIC 9(02) VALUE 5.
 
+       01 WS-CURRENT-DATE-DATA.
+           05  WS-CURRENT-DATE.
+               10  WS-CURRENT-YEAR         PIC 9(04).
+               10  WS-CURRENT-MONTH        PIC 9(02).
+               10  WS-CURRENT-DAY          PIC 9(02).
+           05  WS-CURRENT-TIME.
+               10  WS-CURRENT-HOURS        PIC 9(02).
+               10  WS-CURRENT-MINUTE       PIC 9(02).
+               10  WS-CURRENT-SECOND       PIC 9(02).
+               10  WS-CURRENT-MILLISECONDS PIC 9(02).
       *----------------------------------------------------------------*
+      * LINKAGE SECTION.
+       01 LK-ENTRADA.
+      *   Area de datos de Entrada
+           05 LK-ENT-NUM-TARJETA           PIC X(19).
 
-
+      *   Area de datos de Salida
+       01 LK-MAESTRO-TARJETAS-REG.
+           05 LK-NUM-CUENTA                PIC 9(10).
+           05 LK-NUM-TARJETA               PIC X(19).
+           05 LK-NOMBRE                    PIC X(20).
+           05 LK-APELLIDO                  PIC X(20).
+           05 LK-DIRECCION                 PIC X(40).
+           05 LK-COD-POSTAL                PIC 9(04).
+           05 LK-MONEDA-TARJETA            PIC X(03).
+              88 LK-DOLARES                                VALUE 'USD'.
+              88 LK-PESOS                                  VALUE 'ARS'.
+           05 LK-LIMITE-TARJETA            PIC 9(08)V9(02).
+           05 LK-MOTIVO-ERROR-O.
+              10 LK-COD-ERROR-O            PIC X(20)       VALUE SPACES.
+              10 LK-DES-ERROR-O            PIC X(100)      VALUE SPACES.
 
       *----------------------------------------------------------------*
        PROCEDURE DIVISION.
@@ -141,12 +153,9 @@
            PERFORM 1000-INICIAR-PROGRAMA
               THRU 1000-INICIAR-PROGRAMA-FIN.
 
-           CALL 'MAESTARJ' USING   WS-SAL-NUM-TARJETA,
-                              WS-MAESTRO-TARJETAS-REG.
-           DISPLAY ' VOLVIO DEL CALL '
-           DISPLAY ' ENCONTRE : ' WS-NOMBRE.
-
-      *    CALL 'CLVALFEC' USING WS-.
+           PERFORM 2000-PROCESAR-PROGRAMA
+              THRU 2000-PROCESAR-PROGRAMA-FIN
+             UNTIL FS-CONSUMOS-EOF.
 
            PERFORM 3000-FINALIZAR-PROGRAMA
               THRU 3000-FINALIZAR-PROGRAMA-FIN.
@@ -160,9 +169,6 @@
 
            PERFORM 1200-INICIALIZAR-VARIABLES
               THRU 1200-INICIALIZAR-VARIABLES-FIN.
-
-
-
 
        1000-INICIAR-PROGRAMA-FIN.
            EXIT.
@@ -184,13 +190,12 @@
 
       *----------------------------------------------------------------*
        1200-INICIALIZAR-VARIABLES.
-      *    INITIALIZE WS-VAR-AUX.
 
+           MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE-DATA.
+           INITIALIZE WS-VARIABLES.
 
        1200-INICIALIZAR-VARIABLES-FIN.
            EXIT.
-
-
 
       *----------------------------------------------------------------*
        1110-ABRIR-ENT-CONSUMOS.
@@ -250,22 +255,161 @@
            EXIT.
 
       *----------------------------------------------------------------*
+       2000-PROCESAR-PROGRAMA.
+
+           PERFORM 2200-LEER-CONSUMOS
+              THRU 2200-LEER-CONSUMOS-FIN.
+
+           PERFORM 2300-VALIDAR-TARJETA
+              THRU 2300-VALIDAR-TARJETA-FIN.
+
+           PERFORM 2400-VALIDAR-FECHA
+              THRU 2400-VALIDAR-FECHA-FIN.
+
+           PERFORM 2600-ARMAR-RESUMENES
+              THRU 2600-ARMAR-RESUMENES-FIN.
+
+       2000-PROCESAR-PROGRAMA-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2200-LEER-CONSUMOS.
+
+           READ ENT-CONSUMOS.
+
+           EVALUATE TRUE
+               WHEN FS-CONSUMOS-OK
+                    ADD 1  TO   WS-RESUMEN-TOTAL-CONSUMOS
+                    IF WS-RESUMEN-TARJETA <> WS-ENT-NUM-TARJETA
+                       THEN
+                           ADD  1           TO WS-RESUMEN-TOTAL-TARJETAS
+                           MOVE WS-ENT-NUM-TARJETA TO WS-RESUMEN-TARJETA
+                           MOVE WS-ENT-NUM-TARJETA TO LK-ENT-NUM-TARJETA
+                           MOVE WS-ENT-DIA         TO WS-DD-I
+                           MOVE WS-ENT-MES         TO WS-MM-I
+                           MOVE WS-ENT-ANIO        TO WS-AAAA-I
+                    END-IF
+
+               WHEN FS-CONSUMOS-EOF
+                    DISPLAY '#RESUMENES: ' WS-RESUMEN-TOTAL-RESUMENES
+                    DISPLAY '#TARJETAS: '  WS-RESUMEN-TOTAL-TARJETAS
+                    DISPLAY '#CONSUMOS: '  WS-RESUMEN-TOTAL-CONSUMOS
+                    DISPLAY '#ERRORES: '   WS-RESUMEN-TOTAL-ERRORES
+
+               WHEN OTHER
+                    DISPLAY 'ERROR AL LEER EL ARCHIVO DE CONSUMOS'
+                    DISPLAY 'FILE STATUS: ' FS-CONSUMOS
+      * SI NO  LEE EL ARCHIVO DE ENTRADA DETENGO EL PROCESO
+                    STOP RUN
+           END-EVALUATE.
+
+       2200-LEER-CONSUMOS-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2300-VALIDAR-TARJETA.
+
+           INITIALIZE LK-MAESTRO-TARJETAS-REG.
+
+           CALL 'MAESTARJ' USING LK-ENTRADA, LK-MAESTRO-TARJETAS-REG.
+
+           EVALUATE TRUE
+               WHEN LK-COD-ERROR-O <> SPACES
+
+               PERFORM 2310-ERROR-TARJETA
+                  THRU 2310-ERROR-TARJETA-FIN
+
+           END-EVALUATE.
+
+       2300-VALIDAR-TARJETA-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2310-ERROR-TARJETA.
+
+           MOVE WS-ENT-CONSUMOS TO WS-SAL-ERRORES.
+
+           PERFORM 2500-GRABAR-ERRORES
+              THRU 2500-GRABAR-ERRORES-FIN.
+
+       2310-ERROR-TARJETA-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2400-VALIDAR-FECHA.
+
+           INITIALIZE WS-SALIDA.
+
+           CALL 'CLVALFEC' USING WS-ENTRADA, WS-SALIDA.
+
+           EVALUATE TRUE
+               WHEN WS-VALIDACION-O = 'N'
+
+               PERFORM 2410-ERROR-FECHA
+                  THRU 2410-ERROR-FECHA-FIN
+
+           END-EVALUATE.
+
+       2400-VALIDAR-FECHA-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2410-ERROR-FECHA.
+
+           MOVE WS-SALIDA TO WS-SAL-ERRORES.
+
+           PERFORM 2500-GRABAR-ERRORES
+              THRU 2500-GRABAR-ERRORES-FIN.
+
+       2410-ERROR-FECHA-FIN.
+           EXIT.
+
+
+      *----------------------------------------------------------------*
+       2500-GRABAR-ERRORES.
+
+           WRITE WS-SAL-ERRORES.
+           ADD 1 TO WS-RESUMEN-TOTAL-ERRORES.
+
+       2500-GRABAR-ERRORES-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2600-ARMAR-RESUMENES.
+
+           MOVE  WS-ENT-CONSUMOS TO WS-SAL-RESUMENES.
+
+           PERFORM 2700-IMPRIMIR-RESUMEN
+              THRU 2700-IMPRIMIR-RESUMEN-FIN.
+
+       2600-ARMAR-RESUMENES-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
+       2700-IMPRIMIR-RESUMEN.
+
+           WRITE WS-SAL-RESUMENES.
+           ADD 1 TO WS-RESUMEN-TOTAL-RESUMENES.
+
+       2700-IMPRIMIR-RESUMEN-FIN.
+           EXIT.
+
+      *----------------------------------------------------------------*
        3000-FINALIZAR-PROGRAMA.
-
-
-
 
            PERFORM 3200-CERRAR-ARCHIVOS
               THRU 3200-CERRAR-ARCHIVOS-FIN.
 
        3000-FINALIZAR-PROGRAMA-FIN.
            EXIT.
+
       *----------------------------------------------------------------*
        3200-CERRAR-ARCHIVOS.
 
            CLOSE ENT-CONSUMOS
                  SAL-RESUMENES
                  SAL-ERRORES
+      *          ENT-MAESTRO-TARJETAS.
 
            IF NOT FS-CONSUMOS-OK
               DISPLAY 'ERROR AL CERRAR ARCHIVO CONSUMOS: ' FS-CONSUMOS
@@ -278,6 +422,11 @@
            IF NOT FS-ERRORES-OK
               DISPLAY 'ERROR AL CERRAR ARCHIVO ERRORES: ' FS-ERRORES
            END-IF.
+
+      *     IF NOT FS-MAESTRO-TARJETAS-FILE-OK
+      *        DISPLAY 'ERROR AL CERRAR ARCHIVO MAESTRO TARJETAS: '
+      *                                              FS-MAESTRO-TARJETAS
+      *     END-IF.
 
 
        3200-CERRAR-ARCHIVOS-FIN.
