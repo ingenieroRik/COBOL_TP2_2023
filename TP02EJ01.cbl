@@ -114,7 +114,8 @@
        77 WS-DESCUENTO                     PIC 9(02) VALUE 10.
        77 WS-PAGO-MINIMO                   PIC 9(02) VALUE 5.
 
-       01 WS-CURRENT-DATE-DATA.
+
+141123 01 WS-CURRENT-DATE-FIELDS.
            05  WS-CURRENT-DATE.
                10  WS-CURRENT-YEAR         PIC 9(04).
                10  WS-CURRENT-MONTH        PIC 9(02).
@@ -124,6 +125,11 @@
                10  WS-CURRENT-MINUTE       PIC 9(02).
                10  WS-CURRENT-SECOND       PIC 9(02).
                10  WS-CURRENT-MILLISECONDS PIC 9(02).
+141123     05  WS-DIFF-FROM-GMT            PIC S9(4).
+
+
+
+
       *----------------------------------------------------------------*
       * LINKAGE SECTION.
        01 LK-ENTRADA.
@@ -191,7 +197,7 @@
       *----------------------------------------------------------------*
        1200-INICIALIZAR-VARIABLES.
 
-           MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE-DATA.
+           MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE-FIELDS.
            INITIALIZE WS-VARIABLES.
 
        1200-INICIALIZAR-VARIABLES-FIN.
@@ -275,20 +281,24 @@
       *----------------------------------------------------------------*
        2200-LEER-CONSUMOS.
 
+           INITIALIZE LK-MAESTRO-TARJETAS-REG.
+           INITIALIZE WS-SALIDA
+
            READ ENT-CONSUMOS.
 
-           EVALUATE TRUE
+             EVALUATE TRUE
                WHEN FS-CONSUMOS-OK
                     ADD 1  TO   WS-RESUMEN-TOTAL-CONSUMOS
-                    IF WS-RESUMEN-TARJETA <> WS-ENT-NUM-TARJETA
-                       THEN
-                           ADD  1           TO WS-RESUMEN-TOTAL-TARJETAS
-                           MOVE WS-ENT-NUM-TARJETA TO WS-RESUMEN-TARJETA
-                           MOVE WS-ENT-NUM-TARJETA TO LK-ENT-NUM-TARJETA
-                           MOVE WS-ENT-DIA         TO WS-DD-I
-                           MOVE WS-ENT-MES         TO WS-MM-I
-                           MOVE WS-ENT-ANIO        TO WS-AAAA-I
+
+141123              IF WS-RESUMEN-TARJETA <> WS-ENT-NUM-TARJETA THEN
+                       ADD  1               TO WS-RESUMEN-TOTAL-TARJETAS
                     END-IF
+
+141123              MOVE WS-ENT-NUM-TARJETA TO WS-RESUMEN-TARJETA
+141123              MOVE WS-ENT-NUM-TARJETA TO LK-ENT-NUM-TARJETA
+141123              MOVE WS-ENT-DIA         TO WS-DD-I
+141123              MOVE WS-ENT-MES         TO WS-MM-I
+141123              MOVE WS-ENT-ANIO        TO WS-AAAA-I
 
                WHEN FS-CONSUMOS-EOF
                     DISPLAY '#RESUMENES: ' WS-RESUMEN-TOTAL-RESUMENES
@@ -309,7 +319,7 @@
       *----------------------------------------------------------------*
        2300-VALIDAR-TARJETA.
 
-           INITIALIZE LK-MAESTRO-TARJETAS-REG.
+      *    INITIALIZE LK-MAESTRO-TARJETAS-REG.
 
            CALL 'MAESTARJ' USING LK-ENTRADA, LK-MAESTRO-TARJETAS-REG.
 
@@ -338,7 +348,7 @@
       *----------------------------------------------------------------*
        2400-VALIDAR-FECHA.
 
-           INITIALIZE WS-SALIDA.
+      *     INITIALIZE WS-SALIDA.
 
            CALL 'CLVALFEC' USING WS-ENTRADA, WS-SALIDA.
 
@@ -409,7 +419,7 @@
            CLOSE ENT-CONSUMOS
                  SAL-RESUMENES
                  SAL-ERRORES
-      *          ENT-MAESTRO-TARJETAS.
+
 
            IF NOT FS-CONSUMOS-OK
               DISPLAY 'ERROR AL CERRAR ARCHIVO CONSUMOS: ' FS-CONSUMOS
